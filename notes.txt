@@ -9,6 +9,7 @@ TIMEOUTS
 	- 201 INIT
 	- 202 SERVE
 	- 203 FETCH
+	- 204
 
 SERVER ERRORS
 	- 301 EMPTY_FRONTIER
@@ -23,14 +24,25 @@ REQUEST FORMAT
 	- 501 FAILED_INIT_RESPONSE
 	- 502 FAILED_SERVE_RESPONSE
 	- 503 FAILED_INIT_READ
+	- 504 FAILED_AUTH_READ
 
 ================
 Requests
 ================
 INIT: 			{"request_type": "init", "who": "client/admin"} 
 SERVER_RESPONSE: 	{"request_type": "server_response", "code": "XXX"}
+BEGIN_AUTH:		{"request_type": "begin_auth"}
+AUTH:			{"request_type": "auth", "key": "md5(ip + secret)"}
+	valid:   ee7d82ae0c01265a1ed1966d7d2d8f49
+	invalid: f631cf0848689e2c0c61d91bb4a1e1d5
+AUTH_CONFIRM:		{"request_type": "auth_confirm", "authorised": "true/false"}
+	
 
-
+EXAMPLE:
+Req: {"request_type":"init", "who":"client"}
+Res: {"request_type":"begin_auth"}
+Req: {"request_type":"auth", "key":"f631cf0848689e2c0c61d91bb4a1e1d5"}
+Res: {"request_type":"auth_confirm","authorised":"false"}
 
 ================
 PageFrontier
