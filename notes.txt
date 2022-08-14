@@ -1,0 +1,46 @@
+GENERAL
+	- 1 OK
+
+AUTHENTICATION
+	- 101 INVALID
+	- 102 FAILED_IP_FETCH
+
+TIMEOUTS
+	- 201 INIT
+	- 202 SERVE
+
+SERVER ERRORS
+	- 301 EMPTY_FRONTIER
+	- 302 NO_SEED
+
+MISC ERRORS
+	- 401 FAILED_IP_FETCH
+
+REQUEST FORMAT
+	- 501 FAILED_INIT_RESPONSE
+	- 502 FAILED_SERVE_RESPONSE
+
+
+================
+PageFrontier
+================
+
+fetchNewPage():
+	Let Pe = "Posts empty", let Se = "Sources empty", let Pl = "sources low"
+
+	       Pe | Se | Pl | return
+	        0 |  0 |  0 | post
+	        0 |  0 |  1 | source
+ 	        0 |  1 |  0 | post
+ 	        0 |  1 |  1 | post
+ 	        1 |  0 |  0 | source
+	        1 |  0 |  1 | source
+	        1 |  1 |  0 | DEAD (TODO)
+	        1 |  1 |  1 | DEAD (TODO)
+
+	      DEAD (null) = (Pe && Se)
+
+	      source = (!Pe && !Se && Pl) || (Pe && !Se && !Pl) || (Pe && !Se && Pl)
+	             = !Se && Pl (as Pe => Pl)
+	
+	      post = else
