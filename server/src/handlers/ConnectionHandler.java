@@ -1,5 +1,6 @@
 package handlers;
 
+import connections.ConnectionMonitor;
 import connections.RequestManager;
 import org.json.JSONObject;
 import util.PageFrontier;
@@ -44,6 +45,8 @@ public class ConnectionHandler implements Runnable {
 
             RequestManager requestManager = new RequestManager(input, output);
             JSONObject initRequest = requestManager.awaitInitRequest();
+
+            ConnectionMonitor.logConnection(connectionSocket);
 
             if (initRequest != null) {
                 forwardInitRequestToHandlers(initRequest, input, output, requestManager);
