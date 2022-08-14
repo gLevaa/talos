@@ -1,7 +1,6 @@
 
 package startup;
 
-import connections.ConnectionMonitor;
 import handlers.ConnectionHandler;
 import util.PageFrontier;
 import util.Page;
