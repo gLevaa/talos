@@ -17,6 +17,14 @@ public class RequestManager {
         this.output = output;
     }
 
+    public void serveFinalResponse(String code) {
+        JSONObject response = new JSONObject();
+        response.put("request_type", "server_response");
+        response.put("code", code);
+
+        output.println(response);
+    }
+
     public JSONObject awaitRequest(String type) {
         try {
             return switch (type) {
@@ -66,13 +74,5 @@ public class RequestManager {
             serveFinalResponse("504"); // REQUEST.FAILED_AUTH_READ
             return null;
         }
-    }
-
-    public void serveFinalResponse(String code) {
-        JSONObject response = new JSONObject();
-        response.put("request_type", "server_response");
-        response.put("code", code);
-
-        output.println(response);
     }
 }

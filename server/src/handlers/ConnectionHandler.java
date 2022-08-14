@@ -3,6 +3,7 @@ package handlers;
 import connections.ConnectionMonitor;
 import connections.RequestManager;
 import org.json.JSONObject;
+import util.CommonInfo;
 import util.PageFrontier;
 
 import java.io.BufferedReader;
@@ -48,8 +49,10 @@ public class ConnectionHandler implements Runnable {
 
             ConnectionMonitor.logConnection(connectionSocket);
 
+            CommonInfo commonInfo = new CommonInfo(input, output, requestManager, pageFrontier, connectionSocket);
+
             if (initRequest != null) {
-                forwardInitRequestToHandlers(initRequest, input, output, requestManager);
+                forwardInitRequestToHandlers(initRequest, commonInfo);
             }
         } catch (IOException e) {
             // TODO
@@ -63,15 +66,14 @@ public class ConnectionHandler implements Runnable {
         }
     }
 
-    private void forwardInitRequestToHandlers(JSONObject initRequest, BufferedReader input,
-                                              PrintWriter output, RequestManager requestManager) {
+    private void forwardInitRequestToHandlers(JSONObject initRequest, CommonInfo commonInfo) {
         String whoIsConnecting = String.valueOf(initRequest.get("who"));
 
         if (whoIsConnecting.equals("client")) {
-            ClientRequestHandler clientHandler = new ClientRequestHandler(input, output, requestManager, pageFrontier, connectionSocket);
+            ClientRequestHandler clientHandler = new ClientRequestHandler(commonInfo);
             clientHandler.run();
         } else if (whoIsConnecting.equals("admin")) {
-            AdminRequestHandler adminRequestHandler = new AdminRequestHandler(input, output, requestManager, pageFrontier, connectionSocket);
+            AdminRequestHandler adminRequestHandler = new AdminRequestHandler(commonInfo);
             adminRequestHandler.run();
         }
     }

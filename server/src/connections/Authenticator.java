@@ -1,6 +1,7 @@
 package connections;
 
 import org.json.JSONObject;
+import util.CommonInfo;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -12,22 +13,15 @@ import java.security.NoSuchAlgorithmException;
 public class Authenticator {
     private final String SECRET = "LB4eTi!L";
 
-    private final BufferedReader input;
-    private final PrintWriter output;
-    private final RequestManager requestManager;
-    private final Socket connectionSocket;
+    private final CommonInfo commonInfo;
 
-    public Authenticator(BufferedReader input, PrintWriter output,
-                         RequestManager requestManager, Socket connectionSocket) {
-        this.input = input;
-        this.output = output;
-        this.requestManager = requestManager;
-        this.connectionSocket = connectionSocket;
+    public Authenticator(CommonInfo commonInfo) {
+        this.commonInfo = commonInfo;
     }
 
     public Boolean isClientAuthenticated() {
         sendBeginAuthRequest();
-        JSONObject authResponse = requestManager.awaitRequest("auth_response");
+        JSONObject authResponse = commonInfo.requestManager().awaitRequest("auth_response");
 
         if (authResponse != null) {
             if(authResponse.has("session_id")) {
@@ -48,7 +42,7 @@ public class Authenticator {
         JSONObject beginAuthRequest = new JSONObject();
         beginAuthRequest.put("request_type", "begin_auth");
 
-        output.println(beginAuthRequest);
+        commonInfo.output().println(beginAuthRequest);
     }
 
     public void sendAuthConfirmationResponse(boolean isAuthorised) {
@@ -56,11 +50,11 @@ public class Authenticator {
         authConfirmationRequest.put("request_type", "auth_confirm");
         authConfirmationRequest.put("authorised", String.valueOf(isAuthorised));
 
-        output.println(authConfirmationRequest);
+        commonInfo.output().println(authConfirmationRequest);
     }
 
     private String generateValidKey() {
-        String ipAddress = ConnectionMonitor.getIpAddress(connectionSocket);
+        String ipAddress = ConnectionMonitor.getIpAddress(commonInfo.connectionSocket());
         return getMd5(ipAddress + SECRET);
     }
 
