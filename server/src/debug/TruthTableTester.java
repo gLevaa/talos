@@ -1,9 +1,9 @@
-package util;
+package debug;
 
-public class TestClass {
+public class TruthTableTester {
     private final boolean[][] truthTableValues;
 
-    public TestClass(int variables) {
+    public TruthTableTester(int variables) {
         truthTableValues = new boolean[(int)Math.pow(2, variables)][variables];
         generateTruthTableValues(variables);
 
