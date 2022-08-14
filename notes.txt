@@ -8,10 +8,13 @@ AUTHENTICATION
 TIMEOUTS
 	- 201 INIT
 	- 202 SERVE
+	- 203 FETCH
 
 SERVER ERRORS
 	- 301 EMPTY_FRONTIER
 	- 302 NO_SEED
+	- 303 IO_ERROR
+	- 304 FAILED_TIMEOUT_SET
 
 MISC ERRORS
 	- 401 FAILED_IP_FETCH
@@ -19,6 +22,14 @@ MISC ERRORS
 REQUEST FORMAT
 	- 501 FAILED_INIT_RESPONSE
 	- 502 FAILED_SERVE_RESPONSE
+	- 503 FAILED_INIT_READ
+
+================
+Requests
+================
+INIT: 			{"request_type": "init", "who": "client/admin"} 
+SERVER_RESPONSE: 	{"request_type": "server_response", "code": "XXX"}
+
 
 
 ================
