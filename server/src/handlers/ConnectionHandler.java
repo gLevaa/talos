@@ -3,7 +3,7 @@ package handlers;
 import connections.ConnectionMonitor;
 import connections.RequestManager;
 import org.json.JSONObject;
-import util.CommonInfo;
+import connections.Session;
 import util.PageFrontier;
 
 import java.io.BufferedReader;
@@ -13,7 +13,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 
-public class ConnectionHandler implements Runnable {
+public class ConnectionHandler implements Runnable, Handler {
     private final Socket connectionSocket;
     private final PageFrontier pageFrontier;
 
@@ -33,48 +33,48 @@ public class ConnectionHandler implements Runnable {
     @Override
     public void run() {
         if (failedToSetTimeout) {
-            // 304 SERVER.FAILED_TIMEOUT_SET
-            // Response redundant, TCP error
             return;
         }
 
         try {
-            InputStreamReader inputStreamReader =
-                    new InputStreamReader(connectionSocket.getInputStream());
-            BufferedReader input = new BufferedReader(inputStreamReader);
-            PrintWriter output = new PrintWriter(connectionSocket.getOutputStream(), true);
+            BufferedReader input = fetchInput();
+            PrintWriter output = fetchOutput();
 
             RequestManager requestManager = new RequestManager(input, output);
             JSONObject initRequest = requestManager.awaitRequest("init");
 
-            ConnectionMonitor.logConnection(connectionSocket);
-
-            CommonInfo commonInfo = new CommonInfo(input, output, requestManager, pageFrontier, connectionSocket);
-
             if (initRequest != null) {
-                forwardInitRequestToHandlers(initRequest, commonInfo);
+                ConnectionMonitor.logConnection(connectionSocket);
+
+                Session session = new Session(input, output, requestManager, pageFrontier, connectionSocket);
+                forwardInitRequestToHandlers(initRequest, session);
             }
+            // else => awaitRequest() serves error to client, thread ends here
         } catch (IOException e) {
-            // TODO
+            e.printStackTrace();
         } finally {
             try {
                 connectionSocket.close();
                 Thread.currentThread().interrupt();
             } catch (IOException e) {
-                // TODO
+                e.printStackTrace();
             }
         }
     }
 
-    private void forwardInitRequestToHandlers(JSONObject initRequest, CommonInfo commonInfo) {
-        String whoIsConnecting = String.valueOf(initRequest.get("who"));
+    private void forwardInitRequestToHandlers(JSONObject initRequest, Session session) {
+        boolean clientConnecting = String.valueOf(initRequest.get("who")).equals("client");
 
-        if (whoIsConnecting.equals("client")) {
-            ClientRequestHandler clientHandler = new ClientRequestHandler(commonInfo);
-            clientHandler.run();
-        } else if (whoIsConnecting.equals("admin")) {
-            AdminRequestHandler adminRequestHandler = new AdminRequestHandler(commonInfo);
-            adminRequestHandler.run();
-        }
+        Handler handler = clientConnecting ? new ClientRequestHandler(session) : new AdminRequestHandler(session);
+        handler.run();
+    }
+
+    private BufferedReader fetchInput () throws IOException {
+        InputStreamReader inputStreamReader = new InputStreamReader(connectionSocket.getInputStream());
+        return new BufferedReader(inputStreamReader);
+    }
+
+    private PrintWriter fetchOutput() throws IOException {
+        return new PrintWriter(connectionSocket.getOutputStream(), true);
     }
 }

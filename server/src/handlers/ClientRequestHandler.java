@@ -1,43 +1,29 @@
 package handlers;
 
 import connections.Authenticator;
-import connections.RequestManager;
 import startup.Server;
-import util.CommonInfo;
-import util.PageFrontier;
+import connections.Session;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.net.Socket;
+public class ClientRequestHandler implements Handler {
+    private final Session session;
 
-public class ClientRequestHandler {
-    private final CommonInfo commonInfo;
-
-    public ClientRequestHandler(CommonInfo commonInfo) {
-        this.commonInfo = commonInfo;
+    public ClientRequestHandler(Session session) {
+        this.session = session;
     }
 
     public void run() {
         if (!Server.IS_SEED_SET) {
-            commonInfo.requestManager().serveFinalResponse("302");
+            session.requestManager().serveFinalResponse("302"); // SERVER.NO_SEED
             return;
         }
 
-        // Authenticate
-        Authenticator authenticator = new Authenticator(commonInfo);
-        Boolean isAuthenticated = authenticator.isClientAuthenticated();
-
-        if (isAuthenticated == null) {
-            // Error returned to client within Authenticator
-            return;
+        if (Authenticator.isClientAuthenticated(session)) {
+            handle();
         }
+        // else => isClientAuthenticated() servers error to client, thread ends here
+    }
 
-        authenticator.sendAuthConfirmationResponse(isAuthenticated);
-        if (!isAuthenticated) {
-            return;
-        }
-
-        // At this point, client is authenticated
+    private void handle() {
         // TODO
     }
 }

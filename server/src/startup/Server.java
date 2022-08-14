@@ -1,4 +1,3 @@
-
 package startup;
 
 import handlers.ConnectionHandler;
@@ -16,6 +15,7 @@ public class Server {
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(THREADS);
 
     // TEMP
+    private static boolean KILL = false;
     private static final String SEED = "https://old.reddit.com/r/newzealand";
     public static final boolean IS_SEED_SET = true;
 
@@ -24,7 +24,7 @@ public class Server {
             PageFrontier pageFrontier = new PageFrontier();
             pageFrontier.addNewSeed(new Page(SEED));
 
-            while(true) {
+            while(!KILL) {
                 // .accept() is blocking, no impact on performance
                 threadPool.execute(new ConnectionHandler(receiver.accept(), pageFrontier));
             }
