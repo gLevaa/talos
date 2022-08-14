@@ -68,10 +68,10 @@ public class ConnectionHandler implements Runnable {
         String whoIsConnecting = String.valueOf(initRequest.get("who"));
 
         if (whoIsConnecting.equals("client")) {
-            ClientRequestHandler clientHandler = new ClientRequestHandler(input, output, requestManager, pageFrontier);
+            ClientRequestHandler clientHandler = new ClientRequestHandler(input, output, requestManager, pageFrontier, connectionSocket);
             clientHandler.run();
         } else if (whoIsConnecting.equals("admin")) {
-            AdminRequestHandler adminRequestHandler = new AdminRequestHandler(input, output, requestManager, pageFrontier);
+            AdminRequestHandler adminRequestHandler = new AdminRequestHandler(input, output, requestManager, pageFrontier, connectionSocket);
             adminRequestHandler.run();
         }
     }
