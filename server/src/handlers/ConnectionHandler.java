@@ -44,7 +44,7 @@ public class ConnectionHandler implements Runnable {
             PrintWriter output = new PrintWriter(connectionSocket.getOutputStream(), true);
 
             RequestManager requestManager = new RequestManager(input, output);
-            JSONObject initRequest = requestManager.awaitInitRequest();
+            JSONObject initRequest = requestManager.awaitRequest("init");
 
             ConnectionMonitor.logConnection(connectionSocket);
 

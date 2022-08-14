@@ -28,7 +28,7 @@ public class ClientRequestHandler {
 
     public void run() {
         if (!Server.IS_SEED_SET) {
-            requestManager.serveResponse("302");
+            requestManager.serveFinalResponse("302");
             return;
         }
 

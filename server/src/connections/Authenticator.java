@@ -1,14 +1,11 @@
 package connections;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -30,7 +27,7 @@ public class Authenticator {
 
     public Boolean isClientAuthenticated() {
         sendBeginAuthRequest();
-        JSONObject authResponse = awaitAuthResponse();
+        JSONObject authResponse = requestManager.awaitRequest("auth_response");
 
         if (authResponse != null) {
             if(authResponse.has("session_id")) {
@@ -65,34 +62,6 @@ public class Authenticator {
     private String generateValidKey() {
         String ipAddress = ConnectionMonitor.getIpAddress(connectionSocket);
         return getMd5(ipAddress + SECRET);
-    }
-
-    private JSONObject awaitAuthResponse() {
-        try {
-            JSONObject authResponse = new JSONObject(input.readLine());
-
-            if (authResponse.has("request_type") && (authResponse.has("key") || authResponse.has("session_id"))) {
-                return authResponse;
-            } else {
-                requestManager.serveResponse("504"); // REQUEST.FAILED_AUTH_READ
-                return null;
-            }
-        } catch (SocketTimeoutException e) {
-            // 201 - TIMEOUT.AUTH
-            // Response redundant, timed out
-            e.printStackTrace();
-            return null;
-        } catch (IOException e) {
-            requestManager.serveResponse("303"); // SERVER.IO_ERROR
-            e.printStackTrace();
-
-            return null;
-        } catch (JSONException e) {
-            requestManager.serveResponse("504"); // REQUEST.FAILED_AUTH_READ
-            e.printStackTrace();
-
-            return null;
-        }
     }
 
     private String getMd5(String input) {
