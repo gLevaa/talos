@@ -12,9 +12,9 @@ public class Authenticator {
         boolean isAuthenticated = ALLOWED.contains(ConnectionMonitor.getIpAddress(session.connectionSocket()));
 
         if (!isAuthenticated) {
-            session.requestManager().serveFinalResponse("600"); // AUTH.BAD
+            session.requestManager().serveResponseCode("600"); // AUTH.BAD
         } else {
-            session.requestManager().serveFinalResponse("601"); // AUTH.OK
+            session.requestManager().serveResponseCode("601"); // AUTH.OK
         }
         return isAuthenticated;
     }
@@ -23,9 +23,9 @@ public class Authenticator {
         boolean isAuthenticated = ConnectionMonitor.getIpAddress(session.connectionSocket()).equals(ADMIN_IP);
 
         if (!isAuthenticated) {
-            session.requestManager().serveFinalResponse("600");
+            session.requestManager().serveResponseCode("600");
         } else {
-            session.requestManager().serveFinalResponse("601");
+            session.requestManager().serveResponseCode("601");
         }
         return isAuthenticated;
     }
