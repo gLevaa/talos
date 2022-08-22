@@ -1,8 +1,10 @@
 package handlers;
 
 import connections.Authenticator;
+import org.json.JSONObject;
 import startup.Server;
 import connections.Session;
+import util.Page;
 
 public class ClientRequestHandler implements Handler {
     private final Session session;
@@ -13,7 +15,7 @@ public class ClientRequestHandler implements Handler {
 
     public void run() {
         if (!Server.IS_SEED_SET) {
-            session.requestManager().serveFinalResponse("302"); // SERVER.NO_SEED
+            session.requestManager().serveResponseCode("302"); // SERVER.NO_SEED
             return;
         }
 
@@ -24,6 +26,22 @@ public class ClientRequestHandler implements Handler {
     }
 
     private void handle() {
-        // TODO
+        JSONObject fetchRequest = session.requestManager().awaitRequest("fetch");
+
+        if (fetchRequest == null) { return; } // awaitRequest() serves error to client, thread ends here
+
+        // TODO: DEAD FLAG
+        Page toServe = session.pageFrontier().fetchNewPage();
+        session.requestManager().serveFetchResponse(toServe);
+
+        JSONObject fetchData = session.requestManager().awaitRequest("fetch_data");
+        if (fetchData == null) { return; } // awaitRequest() serves error to client, thread ends here
+
+        if (fetchData.get("status").equals("success")) {
+            session.pageFrontier().removePageFromCache(toServe);
+            // TODO: Cannot complete until parser finished
+        } else {
+            session.pageFrontier().restorePageFromCache(toServe);
+        }
     }
 }

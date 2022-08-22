@@ -15,7 +15,16 @@ public class Page {
         return url.contains("/comments/") && url.contains("old.reddit.com");
     }
 
-    public String getSubreddit() {
-        return "TODO";
+    public String toString() {
+        return this.url;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Page) {
+            return url.equals(((Page) o).getUrl());
+        }
+
+        return false;
     }
 }

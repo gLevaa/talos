@@ -2,6 +2,7 @@ package connections;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import util.Page;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,25 +22,42 @@ public class RequestManager {
         try {
             return switch (type) {
                 case "init" -> awaitInitRequest();
+                case "fetch" -> awaitFetchRequest();
                 default -> null;
             };
         } catch (SocketTimeoutException e) {
             // 201 - TIMEOUT.INIT
             // Response redundant, timed out
-            e.printStackTrace();
 
+            e.printStackTrace();
             return null;
         } catch (IOException e) {
-            serveFinalResponse("303"); // SERVER.IO_ERROR
-            e.printStackTrace();
+            serveResponseCode("303"); // SERVER.IO_ERROR
 
+            e.printStackTrace();
             return null;
         } catch (JSONException e) {
             switch (type) {
-                case "init" -> serveFinalResponse("503"); // REQUEST.FAILED_INIT_READ
+                case "init" -> serveResponseCode("503"); // REQUEST.FAILED_INIT_READ
+                case "fetch" -> serveResponseCode("505"); // REQUEST.FAILED_FETCH_READ
             }
 
             e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void serveFetchResponse(Page toServe) {
+        output.println(new JSONObject("{\"request_type\": \"fetch_response\", \"url\":\"" + toServe.getUrl() + "\"}"));
+    }
+
+    private JSONObject awaitFetchRequest() throws IOException, SocketTimeoutException, JSONException {
+        JSONObject fetchRequest = new JSONObject(input.readLine());
+
+        if (fetchRequest.has("request_type") && fetchRequest.get("request_type").equals("fetch")) {
+            return fetchRequest;
+        } else {
+            serveResponseCode("505"); // REQUEST.FAILED_FETCH_READ
             return null;
         }
     }
@@ -50,12 +68,12 @@ public class RequestManager {
         if (initRequest.has("request_type") && initRequest.has("who")) {
             return initRequest;
         } else {
-            serveFinalResponse("503"); // REQUEST.FAILED_INIT_READ
+            serveResponseCode("503"); // REQUEST.FAILED_INIT_READ
             return null;
         }
     }
 
-    public void serveFinalResponse(String code) {
+    public void serveResponseCode(String code) {
         output.println(new JSONObject("{\"request_type\": \"server_response\", \"code\":\"" + code + "\"}"));
     }
 }
