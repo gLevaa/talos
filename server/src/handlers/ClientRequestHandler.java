@@ -1,6 +1,7 @@
 package handlers;
 
 import connections.Authenticator;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import startup.Server;
 import connections.Session;
@@ -27,7 +28,6 @@ public class ClientRequestHandler implements Handler {
 
     private void handle() {
         JSONObject fetchRequest = session.requestManager().awaitRequest("fetch");
-
         if (fetchRequest == null) { return; } // awaitRequest() serves error to client, thread ends here
 
         // TODO: DEAD FLAG
@@ -40,6 +40,16 @@ public class ClientRequestHandler implements Handler {
         if (fetchData.get("status").equals("success")) {
             session.pageFrontier().removePageFromCache(toServe);
             // TODO: Cannot complete until parser finished
+
+            Page source = new Page(fetchData.get("source").toString());
+            JSONArray urls =(JSONArray) fetchData.get("urls");
+            for (int i = 0; i < urls.length(); i++) {
+                session.pageFrontier().appendNewPage(new Page(urls.get(i).toString()));
+            }
+            session.pageFrontier().appendNewPage(source);
+
+            System.out.println(session.pageFrontier());
+
         } else {
             session.pageFrontier().restorePageFromCache(toServe);
         }

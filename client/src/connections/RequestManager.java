@@ -56,6 +56,10 @@ public class RequestManager {
         output.println(new JSONObject("{\"request_type\":\"fetch\"}"));
     }
 
+    public void serveFetchData(JSONObject response) {
+        output.println(response);
+    }
+
     private JSONObject awaitAuthResponse() throws IOException, SocketTimeoutException, JSONException {
         JSONObject authResponse = new JSONObject(input.readLine());
 

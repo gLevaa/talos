@@ -4,6 +4,7 @@ import connections.PageDownloader;
 import connections.RequestManager;
 import org.json.JSONObject;
 import util.Page;
+import util.ParserInterface;
 
 import java.io.IOException;
 
@@ -33,5 +34,8 @@ public class FetchHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        JSONObject fetchedPages = ParserInterface.requestParsedPages(true);
+        requestManager.serveFetchData(fetchedPages);
     }
 }

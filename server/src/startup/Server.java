@@ -15,9 +15,9 @@ public class Server {
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(THREADS);
 
     // TEMP
-    private static boolean KILL = false;
-    private static final String SEED = "https://old.reddit.com/r/newzealand";
+    private static final String SEED = "https://old.reddit.com/r/newzealand/.json";
     public static final boolean IS_SEED_SET = true;
+    public static boolean KILL = false;
 
     public static void main(String[] args) {
         try(ServerSocket receiver = new ServerSocket((PORT))) {

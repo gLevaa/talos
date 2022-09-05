@@ -23,6 +23,7 @@ public class RequestManager {
             return switch (type) {
                 case "init" -> awaitInitRequest();
                 case "fetch" -> awaitFetchRequest();
+                case "fetch_data" -> awaitFetchData();
                 default -> null;
             };
         } catch (SocketTimeoutException e) {
@@ -56,6 +57,17 @@ public class RequestManager {
 
         if (fetchRequest.has("request_type") && fetchRequest.get("request_type").equals("fetch")) {
             return fetchRequest;
+        } else {
+            serveResponseCode("505"); // REQUEST.FAILED_FETCH_READ
+            return null;
+        }
+    }
+
+    private JSONObject awaitFetchData() throws IOException, SocketTimeoutException, JSONException {
+        JSONObject fetchData = new JSONObject(input.readLine());
+
+        if (fetchData.has("status") && fetchData.has("urls") && fetchData.has("source")) {
+            return fetchData;
         } else {
             serveResponseCode("505"); // REQUEST.FAILED_FETCH_READ
             return null;
