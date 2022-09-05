@@ -2,9 +2,8 @@ package handlers;
 
 import connections.ConnectionMonitor;
 import connections.RequestManager;
+
 import org.json.JSONObject;
-import connections.Session;
-import util.PageFrontier;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,15 +12,13 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 
-public class ConnectionHandler implements Runnable, Handler {
+public class ConnectionHandler implements Runnable {
     private final Socket connectionSocket;
-    private final PageFrontier pageFrontier;
 
     private boolean failedToSetTimeout = false;
 
-    public ConnectionHandler(Socket connectionSocket, PageFrontier pageFrontier) {
+    public ConnectionHandler(Socket connectionSocket) {
         this.connectionSocket = connectionSocket;
-        this.pageFrontier = pageFrontier;
 
         try {
             connectionSocket.setSoTimeout(15 * 1000);
@@ -46,8 +43,7 @@ public class ConnectionHandler implements Runnable, Handler {
             if (initRequest != null) {
                 ConnectionMonitor.logConnection(connectionSocket);
 
-                Session session = new Session(input, output, requestManager, pageFrontier, connectionSocket);
-                forwardInitRequestToHandlers(initRequest, session);
+                forwardInitRequestToHandlers(initRequest, requestManager);
             }
             // else => awaitRequest() serves error to client, thread ends here
         } catch (IOException e) {
@@ -62,14 +58,14 @@ public class ConnectionHandler implements Runnable, Handler {
         }
     }
 
-    private void forwardInitRequestToHandlers(JSONObject initRequest, Session session) {
+    private void forwardInitRequestToHandlers(JSONObject initRequest, RequestManager requestManager) {
         boolean clientConnecting = String.valueOf(initRequest.get("who")).equals("client");
 
-        Handler handler = clientConnecting ? new ClientRequestHandler(session) : new AdminRequestHandler(session);
+        Handler handler = clientConnecting ? new ClientRequestHandler(requestManager, connectionSocket) : new AdminRequestHandler(requestManager, connectionSocket);
         handler.run();
     }
 
-    private BufferedReader fetchInput () throws IOException {
+    private BufferedReader fetchInput() throws IOException {
         InputStreamReader inputStreamReader = new InputStreamReader(connectionSocket.getInputStream());
         return new BufferedReader(inputStreamReader);
     }

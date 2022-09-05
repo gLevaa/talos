@@ -1,57 +1,71 @@
 package handlers;
 
 import connections.Authenticator;
+import connections.RequestManager;
+import startup.Server;
+import util.Page;
+import util.PageFrontier;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
-import startup.Server;
-import connections.Session;
-import util.Page;
+
+import java.net.Socket;
 
 public class ClientRequestHandler implements Handler {
-    private final Session session;
+    public final RequestManager requestManager;
+    public final Socket connectionSocket;
 
-    public ClientRequestHandler(Session session) {
-        this.session = session;
+    public ClientRequestHandler(RequestManager requestManager, Socket connectionSocket) {
+        this.requestManager = requestManager;
+        this.connectionSocket = connectionSocket;
     }
 
     public void run() {
         if (!Server.IS_SEED_SET) {
-            session.requestManager().serveResponseCode("302"); // SERVER.NO_SEED
+            requestManager.serveResponseCode("302"); // SERVER.NO_SEED
             return;
         }
 
-        if (Authenticator.isClientAuthenticated(session)) {
+        if (Authenticator.isClientAuthenticated(this)) {
             handle();
         }
         // else => isClientAuthenticated() servers error to client, thread ends here
     }
 
     private void handle() {
-        JSONObject fetchRequest = session.requestManager().awaitRequest("fetch");
+        // Await a URL fetch request from the client
+        JSONObject fetchRequest = requestManager.awaitRequest("fetch");
         if (fetchRequest == null) { return; } // awaitRequest() serves error to client, thread ends here
 
-        // TODO: DEAD FLAG
-        Page toServe = session.pageFrontier().fetchNewPage();
-        session.requestManager().serveFetchResponse(toServe);
+        // At this point, we have received a {"request_type":"fetch"} from client, who is awaiting a URL
+        // Fetch the page, respond to the client (TODO: Handle DEAD status)
+        Page pageForClient = PageFrontier.fetchNewPage();
+        requestManager.serveFetchResponse(pageForClient);
 
-        JSONObject fetchData = session.requestManager().awaitRequest("fetch_data");
-        if (fetchData == null) { return; } // awaitRequest() serves error to client, thread ends here
+        // Now, the client is downloading the page and parsing the data. We await their response
+        JSONObject fetchDataFromClient = requestManager.awaitRequest("fetch_data");
+        if (fetchDataFromClient == null) { return; } // awaitRequest() serves error to client, thread ends here
 
-        if (fetchData.get("status").equals("success")) {
-            session.pageFrontier().removePageFromCache(toServe);
-            // TODO: Cannot complete until parser finished
+        String fetchedDataStatus = fetchDataFromClient.get("status").toString();
+        if (fetchedDataStatus.equals("success")) {
+            if (pageForClient.isPost()) {
+                // TODO
+            } else {
+                // Source page, containing new pages for parsing
+                // Add the new pages
+                Page newSourcePage = new Page(fetchDataFromClient.get("source").toString());
+                PageFrontier.appendNewPage(newSourcePage);
 
-            Page source = new Page(fetchData.get("source").toString());
-            JSONArray urls =(JSONArray) fetchData.get("urls");
-            for (int i = 0; i < urls.length(); i++) {
-                session.pageFrontier().appendNewPage(new Page(urls.get(i).toString()));
+                for (Object url : (JSONArray) fetchDataFromClient.get("urls")) {
+                    PageFrontier.appendNewPage(new Page(url.toString()));
+                }
             }
-            session.pageFrontier().appendNewPage(source);
 
-            System.out.println(session.pageFrontier());
-
+            PageFrontier.removePageFromCache(pageForClient);;
         } else {
-            session.pageFrontier().restorePageFromCache(toServe);
+            // TODO: Error tracking, is there an issue with the client, or the stored page? Validation script?
+            // Error with client, restore the page to the URL frontier
+            PageFrontier.restorePageFromCache(pageForClient);
         }
     }
 }

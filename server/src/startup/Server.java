@@ -21,12 +21,11 @@ public class Server {
 
     public static void main(String[] args) {
         try(ServerSocket receiver = new ServerSocket((PORT))) {
-            PageFrontier pageFrontier = new PageFrontier();
-            pageFrontier.addNewSeed(new Page(SEED));
+            PageFrontier.addNewSeed(new Page(SEED));
 
             while(!KILL) {
                 // .accept() is blocking, no impact on performance
-                threadPool.execute(new ConnectionHandler(receiver.accept(), pageFrontier));
+                threadPool.execute(new ConnectionHandler(receiver.accept()));
             }
         } catch (IOException e) {
             // TODO

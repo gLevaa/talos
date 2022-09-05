@@ -1,22 +1,23 @@
 package util;
 
 import connections.ConnectionMonitor;
+import jdk.swing.interop.SwingInterOpUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class PageFrontier {
-    private final Queue<Page> posts = new LinkedList<>();
-    private final Queue<Page> sources = new LinkedList<>();
+    private static final Queue<Page> posts = new LinkedList<>();
+    private static final Queue<Page> sources = new LinkedList<>();
 
-    private final ArrayList<Page> servedPageCache = new ArrayList<>();
+    private static final ArrayList<Page> servedPageCache = new ArrayList<>();
 
-    public synchronized void addNewSeed(Page seed) {
+    public static synchronized void addNewSeed(Page seed) {
         sources.add(seed);
     }
 
-    public synchronized void appendNewPage(Page page) {
+    public static synchronized void appendNewPage(Page page) {
         if (page.isPost()) {
             posts.add(page);
         } else {
@@ -24,7 +25,7 @@ public class PageFrontier {
         }
     }
 
-    public synchronized Page fetchNewPage() {
+    public static synchronized Page fetchNewPage() {
         if (shouldDie()) {
             return  null;
         } else if (shouldServeSource()) {
@@ -40,30 +41,25 @@ public class PageFrontier {
         }
     }
 
-    public synchronized void removePageFromCache(Page page) {
+    public static synchronized void removePageFromCache(Page page) {
         // Relies on Page.equals() method, strict comparison of URL
         servedPageCache.remove(page);
     }
 
-    public synchronized void restorePageFromCache(Page page) {
+    public static synchronized void restorePageFromCache(Page page) {
         removePageFromCache(page);
         appendNewPage(page);
     }
 
-    private boolean shouldDie() {
+    private static boolean shouldDie() {
         return posts.isEmpty() && sources.isEmpty();
     }
 
-    private boolean shouldServeSource() {
+    private static boolean shouldServeSource() {
         return !sources.isEmpty() && isPostsLow();
     }
 
-    private boolean isPostsLow() {
+    private static boolean isPostsLow() {
         return posts.size() <= (ConnectionMonitor.getConnectedClients() + 1);
-    }
-
-    public String toString() {
-        // TEMP
-        return sources.toString() + "\n" + posts.toString() + "\n";
     }
 }

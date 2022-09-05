@@ -1,17 +1,21 @@
 package handlers;
 
 import connections.Authenticator;
-import connections.Session;
+import connections.RequestManager;
+
+import java.net.Socket;
 
 public class AdminRequestHandler implements Handler {
-    private final Session session;
+    public final RequestManager requestManager;
+    public final Socket connectionSocket;
 
-    public AdminRequestHandler(Session session) {
-        this.session = session;
+    public AdminRequestHandler(RequestManager requestManager, Socket connectionSocket) {
+        this.requestManager = requestManager;
+        this.connectionSocket = connectionSocket;
     }
 
     public void run() {
-        if (Authenticator.isAdminAuthenticated(session)) {
+        if (Authenticator.isAdminAuthenticated(this)) {
             handle();
         }
         // else => isAdminAuthenticated() servers error to client, thread ends here
