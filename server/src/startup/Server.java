@@ -15,7 +15,7 @@ public class Server {
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(THREADS);
 
     // TEMP
-    private static final String SEED = "https://old.reddit.com/r/newzealand/.json";
+    private static final String SEED = "https://old.reddit.com/r/newzealand/new/.json";
     public static final boolean IS_SEED_SET = true;
     public static boolean KILL = false;
 

@@ -16,7 +16,7 @@ def parse_source(data):
 
             extracted_urls["urls"].append(f"https://old.reddit.com/{subreddit}/comments/{post_id[3:]}/.json")
 
-        extracted_urls["source"] = f"https://old.reddit.com/r/newzealand/new/?count={int(sys.argv[2]) + 25}&after={next}/.json"
+        extracted_urls["source"] = f"https://old.reddit.com/r/newzealand/new/.json?count={int(sys.argv[2]) + 25}&after={next}"
     except:
         extracted_urls = {"status":"failure"}
 
