@@ -48,9 +48,7 @@ public class ClientRequestHandler implements Handler {
 
         String fetchedDataStatus = fetchDataFromClient.get("status").toString();
         if (fetchedDataStatus.equals("success")) {
-            if (pageForClient.isPost()) {
-                // TODO
-            } else {
+            if (pageForClient.isSource()) {
                 // Source page, containing new pages for parsing
                 // Add the new pages
                 Page newSourcePage = new Page(fetchDataFromClient.get("source").toString());
@@ -59,6 +57,8 @@ public class ClientRequestHandler implements Handler {
                 for (Object url : (JSONArray) fetchDataFromClient.get("urls")) {
                     PageFrontier.appendNewPage(new Page(url.toString()));
                 }
+            } else {
+                // TODO
             }
 
             PageFrontier.removePageFromCache(pageForClient);;

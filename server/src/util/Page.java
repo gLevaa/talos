@@ -1,5 +1,9 @@
 package util;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.stream.Stream;
+
 public class Page {
     private final String url;
 
@@ -11,9 +15,25 @@ public class Page {
         return this.url;
     }
 
-    public boolean isPost() {
-        return url.contains("/comments/") && url.contains("old.reddit.com");
+    public boolean isSource() {
+        return !(url.contains("/comments/")) && url.contains("old.reddit.com");
     }
+
+    public int getCount() {
+        try {
+            String count = Stream.of(url.split("\\?")[1].split("&"))
+                    .map(c -> c.split("="))
+                    .filter(c -> "count".equalsIgnoreCase(c[0]))
+                    .map(c -> c[1])
+                    .findFirst()
+                    .orElse("");
+
+            return Integer.parseInt(count);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return 0;
+        }
+    }
+
 
     public String toString() {
         return this.url;

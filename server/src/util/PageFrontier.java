@@ -18,10 +18,10 @@ public class PageFrontier {
     }
 
     public static synchronized void appendNewPage(Page page) {
-        if (page.isPost()) {
-            posts.add(page);
-        } else {
+        if (page.isSource()) {
             sources.add(page);
+        } else {
+            posts.add(page);
         }
     }
 
