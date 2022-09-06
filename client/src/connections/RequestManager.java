@@ -29,6 +29,38 @@ public class RequestManager {
         }
     }
 
+    public void serveRequest(String type, Object argument) {
+        try {
+            switch (type) {
+                case "fetch_data" -> serveFetchData(argument);
+            };
+        } catch (JSONException e) {
+
+            e.printStackTrace();
+        }
+    }
+
+    private void serveInitRequest() {
+        JSONObject initRequest = new JSONObject();
+        initRequest.put("request_type", "init");
+        initRequest.put("who", "client");
+
+        output.println(initRequest);
+    }
+
+    private void serveFetchRequest() {
+        JSONObject fetchRequest = new JSONObject();
+        fetchRequest.put("request_type", "fetch");
+
+        output.println(fetchRequest);
+    }
+
+    private void serveFetchData(Object response) {
+        if (response instanceof JSONObject) {
+            output.println(response);
+        }
+    }
+
     public JSONObject awaitResponse(String type) {
         try {
             return switch (type) {
@@ -48,19 +80,7 @@ public class RequestManager {
         }
     }
 
-    public void serveInitRequest() {
-        output.println(new JSONObject("{\"request_type\":\"init\", \"who\":\"client\"}"));
-    }
-
-    public void serveFetchRequest() {
-        output.println(new JSONObject("{\"request_type\":\"fetch\"}"));
-    }
-
-    public void serveFetchData(JSONObject response) {
-        output.println(response);
-    }
-
-    private JSONObject awaitAuthResponse() throws IOException, SocketTimeoutException, JSONException {
+    private JSONObject awaitAuthResponse() throws IOException, JSONException {
         JSONObject authResponse = new JSONObject(input.readLine());
 
         if (authResponse.has("code")) {
@@ -70,7 +90,7 @@ public class RequestManager {
         }
     }
 
-    private JSONObject awaitFetchResponse() throws IOException, SocketTimeoutException, JSONException {
+    private JSONObject awaitFetchResponse() throws IOException, JSONException {
         JSONObject fetchResponse = new JSONObject(input.readLine());
 
         if (fetchResponse.has("request_type") && fetchResponse.has("url")) {

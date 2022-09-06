@@ -8,21 +8,17 @@ import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
 public class ParserInterface {
-    public static JSONObject requestParsedPages(boolean isSource) {
-        if (isSource) {
-            return requestSourceParse();
-        }
+    public static JSONObject requestParsedPages(Page page) {
+        String sourceOrPageParameter = page.isSource() ? "s" : "p";
+        ProcessBuilder pythonProcessBuilder = new ProcessBuilder("python", "talos_parser.py", sourceOrPageParameter, String.valueOf(page.getCount()));
 
-        return null;
-    }
-
-    private static JSONObject requestSourceParse() {
-        ProcessBuilder pb = new ProcessBuilder("python", "talos_parser.py", "s", "0");
         try {
-            Process p = pb.start();
-            BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            Process pythonProcess = pythonProcessBuilder.start();
 
-            return new JSONObject(in.lines().collect(Collectors.joining(System.lineSeparator())));
+            BufferedReader scriptOutputReader = new BufferedReader(new InputStreamReader((pythonProcess.getInputStream())));
+            String scriptOutput = scriptOutputReader.lines().collect(Collectors.joining(System.lineSeparator()));
+
+            return new JSONObject(scriptOutput);
         } catch (IOException e) {
             e.printStackTrace();
             return null;

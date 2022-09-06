@@ -16,14 +16,18 @@ public class Client {
 
     // TODO: Deal with exceptions, globally
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         for(int i = 0; i < THREADS; i++) {
             spawnNewSessionThread();
         }
     }
 
-    public static void spawnNewSessionThread() throws IOException {
-        Socket socket = new Socket(SERVER_IP, SERVER_PORT);
-        threadPool.execute(new ConnectionHandler(socket));
+    public static void spawnNewSessionThread() {
+        try {
+            Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+            threadPool.execute(new ConnectionHandler(socket));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
