@@ -67,10 +67,10 @@ class PostParser:
     def parse_generalised_fields(self):
         pass
 
-    def parse_text(self):
+    def parse_text(self, is_internal):
         print("text")
 
-    def parse_crosspost(self):
+    def parse_crosspost(self, is_internal):
         print("crosspost")
 
     def parse_image(self, is_internal):
