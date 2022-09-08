@@ -1,0 +1,112 @@
+==============
+PARSING SOURCES
+==============
+Note: Sources denote pages such as r/all, where we have a list of posts to fetch, as well as the next page.
+
+Source parsing is somewhat trivial, compared to actual pages with content. The JSON API will return
+	{ "data": 
+		{
+			"after": "a_post_id", 
+			"children": [
+				"post1": { "name": "t3_postId", "subreddit_name_prefixed": "r/..."}, 
+				"post2": { ... }
+				],
+			...
+		}, 
+		...
+	}
+when querying a source page.
+
+Iterating through each post listed, we can fetch the post JSON link:
+	f"https://old.reddit.com/{subreddit}/comments/{post_id[3:]}/.json"
+and for a singular iteration, the next page:
+	f"https://old.reddit.com/r/{subreddit}/new/?count={int(sys.argv[2]) + 25}&after={next}"
+where {int(sys.argv[2]) + 25} implements incrementing of the count parameter.
+
+For clarification here are a few URLs from organic next pages:
+	- https://old.reddit.com/r/all/?count=0
+	- https://old.reddit.com/r/all/?count=25&after=t3_x8g8ny
+	- https://old.reddit.com/r/all/?count=50&after=t3_x8o0bb
+and for actual posts (randomly taken):
+	- https://old.reddit.com/r/IASIP/comments/x8n2ex/you_gotta_pay_the_troll_toll_in_nyc/
+	- https://old.reddit.com/r/Whatcouldgowrong/comments/x8ibeh/wcgw_tailgating_during_rush_hour/
+hence the {post_id[3:]}, removing the t3_ (which Reddit uses as an object identifier prefix). 
+
+==============
+PARSING POSTS
+==============
+--------------
+TYPE DETECTION
+--------------
+On Reddit, there are different 'types' of posts, i.e. text, images, etc. Before deciding how to decipher between these types, I came up with a number of global/general fields
+found within the JSON API response which apply to all possible posts.
+
+These are (self) denoted 'global fields', and include;
+	- "id" 				-> String, Reddit's unique post identifier
+	- "title 			-> String, the post title
+	- "subreddit_name_prefixed" 	-> String, the subreddit name including r/, e.g. 'r/subreddit'
+	- "selftext"			-> String, the text content of the post
+	- "num_comments"		-> Integer, the number of comments on the post
+	- "link_flair_text"		-> String/Null, the post flair
+	- "ups"				-> Integer, the number of upvotes
+	- "upvote_ratio"		-> Float (2.dp), ratio between upvotes and downvotes
+	- "over_18"			-> Boolean, post is marked over 18
+	- "quarantine"			-> Boolean, post is quarantined
+	- "total_awards_received"	-> Integer, number of awards
+	- "created"			-> Integer, post publish time (Epoch/Unix)
+	- "permalink"			-> String, the permanent link to the post
+	- "num_crossposts"		-> Integer, number of times the post was crossposted
+	- "locked"			-> Boolean, post was locked by moderators
+	- "author_premium"		-> Boolean, author has reddit premium
+
+Note: There are many more fields than this. Those listed, I personally deemed relevant enough to be stored with respect to resource usage (disk storage).
+
+There exist multiple sub-types of the global post type. Intuitively, these include; images, text, etc. For a number of these sub-types, we have
+both 'internal' and 'external' classes.
+	- Internal: content hosted on the Reddit servers
+	- External: content hosted off the Reddit servers
+There is no field in the JSON API which allows you to immediately distinguish the post type. It is apparently inferred from many other fields.
+
+I collected a number of posts and began to list their type.
+	- Cross posts (internal) (reference to other post)
+	- Text posts (internal) 
+	- Links (external) (e.g. news)
+	- Images (internal/external) (includes gifs)
+	- Videos (internal/external)
+
+I then collected fields which appeared to change in accordance to their type. These include;
+	- "url_overridden_by_dest"	-> String/DNE, URL redirect when clicking on post (e.g. click on image, redirect to imgur)
+	- "url"				-> String, URL of the content (e.g. news article, imgur, reddit text post)
+	- "domain"			-> String, domain of the content
+		* self.subreddit
+		* site.com
+		* subdomain.site.com
+		* i.redd.it
+		* v.redd.it
+	- "is_self"			-> Boolean, whether or not the content points to the post origin subreddit (false if (i/v/).redd.it)
+	- "is_reddit_media_domain"	-> Boolean, if the content is media, is the media hosted internally ((i/v).redd.it)
+	- "media"			-> JSONObject/null, contains either external GIF embed, or internal Reddit video content
+	- "is_video"			-> Boolean, if and only if the content is an internal Reddit video
+	- "crosspost_parent_list"	-> JSONObject/DNE, exists only if crosspost, contains a JSONObject which is the original post JSON data
+
+With this information, determine_post_type() was created. This function analysed (I_/E_ -> internal/external prefix):
+	- 10x TEXT		100% accuracy
+	- 5x  CROSSPOST		100% accuracy
+	- 10x E_LINK		100% accuracy
+	- 10X I_IMAGE		100% accuracy
+	- 5X  I_IMAGE (GALLERY)	100% accuracy
+	- 5X  E_IMAGE		80%  accuracy
+	- 5X  E_IMAGE (GIF) 	100% accuracy
+	- 10X I_VIDEO		100% accuracy
+	- 10X E_VIDEO		100% accuracy
+Which suffers from the following biases;
+	- E_IMAGES (IMAGE/GIF) were only imgur and gyfcat links
+		* the overwhelming majority of images use these services
+		* detection only if the image an embed, not just a reference to a site (hence 4/5 hit rate)
+	- E_VIDEO were mainstream sites, twitter, vimeo and youtube
+		* detection if the site contains any embed media that is not image/gif
+	- all links sampled from r/popular, r/all, etc. 
+		* it would be likely only well formatted posts make it to this page
+
+These results are somewhat reassuring, but far from guarunteed to be entirely accurate as the number of posts grow large. 
+It will suffice for the purposes of this project.
